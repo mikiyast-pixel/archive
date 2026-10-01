@@ -26,8 +26,16 @@ VALID_CONDITIONS = ["fragile", "fair", "good"]
 
 MIN_YEAR = 1100
 MAX_YEAR = 1900
-
-
+def is_null(val):
+    if val is None:
+        return True
+    return False
+def is_int(str):
+    try:
+        int(str)
+        return True
+    except ValueError:
+        return False
 def validate_id(value):
     """An ID is the letters 'MS' followed by exactly three digits.
 
@@ -36,9 +44,19 @@ def validate_id(value):
 
     Returns (bool, str).
     """
-    h
+    if is_null(value):
+        return (False,"NO ID!")
+    if len(value) != 5:
+        return (False,"ID's length is too short")
+    elif value[:3]!="MS":
+        return (False,"Invalid ID,ID is supposed to start with MS")
+    elif not is_int(value[3:]):
+        return (False,"Invalid ID,ID is supposed to end with a three digit integer")
+    elif 1 < int(value[3:]) <= 999:
+        return (False,"Invalid ID,ID is supposed to end with a three digit integer between 1 and 999")
+    else:
+        return (True, "Valid ID")
     raise NotImplementedError("validate_id")
-
 
 def validate_title(value):
     """A title must be present and at least 3 characters once stripped.
@@ -48,9 +66,14 @@ def validate_title(value):
 
     Returns (bool, str).
     """
+    if is_null(value):
+        return (False,"Title is not present")
+    elif len(value) < 3:
+        return (False,"Title must have at least 3 cahracters")
+    else:
+        return (True,"Valid")
     raise NotImplementedError("validate_title")
-
-
+    
 def validate_city(value):
     """A city must be present and appear in KNOWN_CITIES.
 
@@ -60,6 +83,12 @@ def validate_city(value):
 
     Returns (bool, str).
     """
+    if is_null(value):
+        return (False,"City is not present")
+    elif value not in KNOWN_CITIES:
+        return(False,"City must be in KNOWN CITIES")
+    else:
+        return (True,"Valid")
     raise NotImplementedError("validate_city")
 
 
@@ -75,6 +104,14 @@ def validate_year(value):
 
     Returns (bool, str).
     """
+    if is_null(value):
+        return (False,"Year is not present")
+    elif not is_int(value):
+        return (False,"Year is supposed to be an integer between 1100 and 1900 inclusive")
+    elif not MIN_YEAR <= value <= MAX_YEAR:
+        return (False,"Year must in between 1100 and 1900 inclusive")
+    else:
+        return (True,"Valid")
     raise NotImplementedError("validate_year")
 
 
@@ -86,6 +123,7 @@ def validate_condition(value):
 
     Returns (bool, str).
     """
+    
     raise NotImplementedError("validate_condition")
 
 
