@@ -27,6 +27,8 @@ VALID_CONDITIONS = ["fragile", "fair", "good"]
 MIN_YEAR = 1100
 MAX_YEAR = 1900
 def is_null(val):
+    if val.type == str and len(val) == 0:
+        return True 
     if val is None:
         return True
     return False
@@ -35,6 +37,11 @@ def is_int(str):
         int(str)
         return True
     except ValueError:
+        return False
+def is_there_a_space(val):
+    if " " in val:
+        return True
+    else:
         return False
 def validate_id(value):
     """An ID is the letters 'MS' followed by exactly three digits.
@@ -102,10 +109,12 @@ def validate_year(value):
     Note that "2087" parses perfectly well as a number. It is still wrong.
     That is the whole point of a range check.
 
-    Returns (bool, str).
+    Returns (bool, str)
     """
     if is_null(value):
         return (False,"Year is not present")
+    elif is_there_a_space(value):
+        return (False,"The string that has the year in it should not have  an empty space inside")
     elif not is_int(value):
         return (False,"Year is supposed to be an integer between 1100 and 1900 inclusive")
     elif not MIN_YEAR <= value <= MAX_YEAR:
@@ -123,7 +132,6 @@ def validate_condition(value):
 
     Returns (bool, str).
     """
-    
     
     raise NotImplementedError("validate_condition")
 
