@@ -171,3 +171,4 @@ def validate_record(record):
             reasons.append(reason)
 
     return reasons
+    raise NotImplementedError("validate_record")
