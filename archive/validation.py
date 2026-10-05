@@ -21,28 +21,28 @@ The year range is INCLUSIVE at both ends: 1100 and 1900 are VALID.
 from archive.errors import MalformedRecordError  # noqa: F401  (you may not need it here)
 
 KNOWN_CITIES = ["Timbuktu", "Djenne", "Gao", "Walata", "Chinguetti"]
-
 VALID_CONDITIONS = ["fragile", "fair", "good"]
 
 MIN_YEAR = 1100
 MAX_YEAR = 1900
+
+
 def is_null(val):
-    if val.type == str and len(val) == 0:
-        return True 
     if val is None:
         return True
+    if isinstance(val, str) and len(val.strip()) == 0:
+        return True
     return False
-def is_int(str):
+
+
+def is_int(val):
     try:
-        int(str)
+        int(val)
         return True
-    except ValueError:
+    except (ValueError, TypeError):
         return False
-def is_there_a_space(val):
-    if " " in val:
-        return True
-    else:
-        return False
+
+
 def validate_id(value):
     """An ID is the letters 'MS' followed by exactly three digits.
 
@@ -52,18 +52,16 @@ def validate_id(value):
     Returns (bool, str).
     """
     if is_null(value):
-        return (False,"NO ID!")
+        return (False, "ID is missing")
     if len(value) != 5:
-        return (False,"ID's length is too short")
-    elif value[:3]!="MS":
-        return (False,"Invalid ID,ID is supposed to start with MS")
-    elif not is_int(value[3:]):
-        return (False,"Invalid ID,ID is supposed to end with a three digit integer")
-    elif 1 < int(value[3:]) <= 999:
-        return (False,"Invalid ID,ID is supposed to end with a three digit integer between 1 and 999")
-    else:
-        return (True, "Valid ID")
-    raise NotImplementedError("validate_id")
+        return (False, "ID must be exactly 5 characters long")
+    if value[:2] != "MS":
+        return (False, "ID must start with uppercase 'MS'")
+    if not value[2:].isdigit():
+        return (False, "ID must end with exactly three digits")
+
+    return (True, "Valid ID")
+
 
 def validate_title(value):
     """A title must be present and at least 3 characters once stripped.
@@ -74,13 +72,15 @@ def validate_title(value):
     Returns (bool, str).
     """
     if is_null(value):
-        return (False,"Title is not present")
-    elif len(value) < 3:
-        return (False,"Title must have at least 3 cahracters")
-    else:
-        return (True,"Valid")
-    raise NotImplementedError("validate_title")
-    
+        return (False, "Title is missing")
+
+    cleaned_title = value.strip()
+    if len(cleaned_title) < 3:
+        return (False, "Title must be at least 3 characters once stripped")
+
+    return (True, "Valid Title")
+
+
 def validate_city(value):
     """A city must be present and appear in KNOWN_CITIES.
 
@@ -91,12 +91,13 @@ def validate_city(value):
     Returns (bool, str).
     """
     if is_null(value):
-        return (False,"City is not present")
-    elif value not in KNOWN_CITIES:
-        return(False,"City must be in KNOWN CITIES")
-    else:
-        return (True,"Valid")
-    raise NotImplementedError("validate_city")
+        return (False, "City is missing")
+
+    known_cities_lower = [c.lower() for c in KNOWN_CITIES]
+    if value.strip().lower() not in known_cities_lower:
+        return (False, f"City '{value}' is not in known cities list")
+
+    return (True, "Valid City")
 
 
 def validate_year(value):
@@ -112,16 +113,17 @@ def validate_year(value):
     Returns (bool, str)
     """
     if is_null(value):
-        return (False,"Year is not present")
-    elif is_there_a_space(value):
-        return (False,"The string that has the year in it should not have  an empty space inside")
-    elif not is_int(value):
-        return (False,"Year is supposed to be an integer between 1100 and 1900 inclusive")
-    elif not MIN_YEAR <= value <= MAX_YEAR:
-        return (False,"Year must in between 1100 and 1900 inclusive")
-    else:
-        return (True,"Valid")
-    raise NotImplementedError("validate_year")
+        return (False, "Year is missing")
+
+    stripped = value.strip()
+    if not is_int(stripped):
+        return (False, "Year must be an integer")
+
+    year_int = int(stripped)
+    if not (MIN_YEAR <= year_int <= MAX_YEAR):
+        return (False, f"Year must be between {MIN_YEAR} and {MAX_YEAR} inclusive")
+
+    return (True, "Valid Year")
 
 
 def validate_condition(value):
@@ -132,8 +134,13 @@ def validate_condition(value):
 
     Returns (bool, str).
     """
-    
-    raise NotImplementedError("validate_condition")
+    if is_null(value):
+        return (False, "Condition is missing")
+
+    if value.strip().lower() not in [c.lower() for c in VALID_CONDITIONS]:
+        return (False, f"Condition must be one of {VALID_CONDITIONS}")
+
+    return (True, "Valid Condition")
 
 
 def validate_record(record):
@@ -147,4 +154,20 @@ def validate_record(record):
 
     Do not re-write the rules here. Call the five functions above.
     """
-    raise NotImplementedError("validate_record")
+    reasons = []
+
+    field_validators = [
+        ("id", validate_id),
+        ("title", validate_title),
+        ("city", validate_city),
+        ("year", validate_year),
+        ("condition", validate_condition),
+    ]
+
+    for key, validator in field_validators:
+        val = record.get(key, "")
+        is_valid, reason = validator(val)
+        if not is_valid:
+            reasons.append(reason)
+
+    return reasons
