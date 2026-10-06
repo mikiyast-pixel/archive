@@ -1,59 +1,69 @@
-"""Questions we ask the Archive.
-
-YOU IMPLEMENT THIS FILE.
-
-Every function here takes `records` — a list of record dicts as produced by
-load_archive — and answers one question about the collection. None of them
-touch a file. None of them print anything. They return values.
-
-Keep in mind from Week 2: the structure you are given decides which of these
-is cheap and which is expensive. All of these are linear scans over a list.
-Note in your README which one would be instant with a dictionary instead.
-"""
+"""Questions we ask the Archive."""
 
 
 def count_before(records, year):
-    """How many manuscripts were written strictly BEFORE `year`?
-
-    `year` is an int. Record years may be strings from the file — convert.
-
-    Returns int.
-    """
-    raise NotImplementedError("count_before")
+    """How many manuscripts were written strictly BEFORE `year`?"""
+    count = 0
+    for rec in records:
+        if int(rec["year"]) < year:
+            count += 1
+    return count
 
 
 def find_by_city(records, city):
-    """Every record whose city matches `city`, case-insensitively.
-
-    Order is preserved: the records come back in the order they appear in
-    `records`.
-
-    Returns list of dicts (empty list if none match).
-    """
-    raise NotImplementedError("find_by_city")
+    """Every record whose city matches `city`, case-insensitively. Order is preserved."""
+    target = city.strip().lower()
+    return [rec for rec in records if rec["city"].strip().lower() == target]
 
 
 def oldest(records):
-    """The record with the smallest year.
+    """The record with the smallest year. Return None if empty.
+"""Questions we ask the Archive."""
 
-    An empty list returns None — not an error, not a crash. Deciding what
-    "the oldest of nothing" means is your job, and the answer is None.
+
+def count_before(records, year):
+    """How many manuscripts were written strictly BEFORE `year`?"""
+    count = 0
+    for rec in records:
+        if int(rec["year"]) < year:
+            count += 1
+    return count
+
+
+def find_by_city(records, city):
+    """Every record whose city matches `city`, case-insensitively. Order is preserved."""
+    target = city.strip().lower()
+    return [rec for rec in records if rec["city"].strip().lower() == target]
+
+
+def oldest(records):
+    """The record with the smallest year. Return None if empty.
 
     If two records tie on year, return the one that appears FIRST.
-
-    Returns dict or None.
     """
-    raise NotImplementedError("oldest")
+    if not records:
+        return None
+    return min(records, key=lambda rec: int(rec["year"]))
 
 
 def cities_summary(records):
-    """How many manuscripts come from each city?
-
-    Returns a dict mapping city name to count. A city with zero manuscripts
-    does not appear as a key at all — do not pre-fill from KNOWN_CITIES.
-
-    Use the city spelling exactly as it appears in the records.
-
-    Returns dict.
+    """How many manuscripts come from each city?"""
+    summary = {}
+    for rec in records:
+        city_name = rec["city"]
+        summary[city_name] = summary.get(city_name, 0) + 1
+    return summary
+    If two records tie on year, return the one that appears FIRST.
     """
-    raise NotImplementedError("cities_summary")
+    if not records:
+        return None
+    return min(records, key=lambda rec: int(rec["year"]))
+
+
+def cities_summary(records):
+    """How many manuscripts come from each city?"""
+    summary = {}
+    for rec in records:
+        city_name = rec["city"]
+        summary[city_name] = summary.get(city_name, 0) + 1
+    return summary
