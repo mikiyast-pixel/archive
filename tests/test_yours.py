@@ -230,4 +230,40 @@ def test_count_before_strict_and_string_years():
     assert count_before(sample, 1600) == 1
 
 
-def test_find_by_city_
+def test_find_by_city_case_insensitive_and_order():
+    sample = [
+        {"id": "MS001", "city": "Timbuktu"},
+        {"id": "MS002", "city": "Djenne"},
+        {"id": "MS003", "city": "timbuktu"},
+    ]
+    matches = find_by_city(sample, "TIMBUKTU")
+    assert len(matches) == 2
+    assert matches[0]["id"] == "MS001"
+    assert matches[1]["id"] == "MS003"
+
+
+def test_oldest_first_on_tie():
+    sample = [
+        {"id": "MS001", "year": "1500"},
+        {"id": "MS002", "year": "1400"},
+        {"id": "MS003", "year": "1400"},
+    ]
+    res = oldest(sample)
+    assert res["id"] == "MS002"
+
+
+def test_oldest_empty():
+    assert oldest([]) == None
+
+
+def test_cities_summary_spelling():
+    sample = [
+        {"city": "Timbuktu"},
+        {"city": "timbuktu"},
+        {"city": "Djenne"},
+    ]
+    summary = cities_summary(sample)
+    assert summary["Timbuktu"] == 1
+    assert summary["timbuktu"] == 1
+    assert summary["Djenne"] == 1
+    assert ("Gao" in summary) == False
