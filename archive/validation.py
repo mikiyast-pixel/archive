@@ -51,13 +51,13 @@ def validate_id(value):
 
     Returns (bool, str).
     """
-    if is_null(value):
+    if is_null(value) == True:
         return (False, "ID is missing")
     if len(value) != 5:
         return (False, "ID must be exactly 5 characters long")
-    if value[:2] != "MS":
+    if value[0:2] != "MS":
         return (False, "ID must start with uppercase 'MS'")
-    if not value[2:].isdigit():
+    if value[2:].isdigit() == False:
         return (False, "ID must end with exactly three digits")
 
     return (True, "Valid ID")
@@ -71,7 +71,7 @@ def validate_title(value):
 
     Returns (bool, str).
     """
-    if is_null(value):
+    if is_null(value) == True:
         return (False, "Title is missing")
 
     cleaned_title = value.strip()
@@ -90,12 +90,15 @@ def validate_city(value):
 
     Returns (bool, str).
     """
-    if is_null(value):
+    if is_null(value) == True:
         return (False, "City is missing")
 
-    known_cities_lower = [c.lower() for c in KNOWN_CITIES]
+    known_cities_lower = []
+    for c in KNOWN_CITIES:
+        known_cities_lower.append(c.lower())
+
     if value.strip().lower() not in known_cities_lower:
-        return (False, f"City '{value}' is not in known cities list")
+        return (False, "City is not in known cities list")
 
     return (True, "Valid City")
 
@@ -112,16 +115,16 @@ def validate_year(value):
 
     Returns (bool, str)
     """
-    if is_null(value):
+    if is_null(value) == True:
         return (False, "Year is missing")
 
     stripped = value.strip()
-    if not is_int(stripped):
+    if is_int(stripped) == False:
         return (False, "Year must be an integer")
 
     year_int = int(stripped)
-    if not (MIN_YEAR <= year_int <= MAX_YEAR):
-        return (False, f"Year must be between {MIN_YEAR} and {MAX_YEAR} inclusive")
+    if year_int < MIN_YEAR or year_int > MAX_YEAR:
+        return (False, "Year must be between 1100 and 1900 inclusive")
 
     return (True, "Valid Year")
 
@@ -134,11 +137,15 @@ def validate_condition(value):
 
     Returns (bool, str).
     """
-    if is_null(value):
+    if is_null(value) == True:
         return (False, "Condition is missing")
 
-    if value.strip().lower() not in [c.lower() for c in VALID_CONDITIONS]:
-        return (False, f"Condition must be one of {VALID_CONDITIONS}")
+    valid_conditions_lower = []
+    for c in VALID_CONDITIONS:
+        valid_conditions_lower.append(c.lower())
+
+    if value.strip().lower() not in valid_conditions_lower:
+        return (False, "Condition must be one of valid conditions")
 
     return (True, "Valid Condition")
 
@@ -156,19 +163,47 @@ def validate_record(record):
     """
     reasons = []
 
-    field_validators = [
-        ("id", validate_id),
-        ("title", validate_title),
-        ("city", validate_city),
-        ("year", validate_year),
-        ("condition", validate_condition),
-    ]
+    if record == None or not isinstance(record, dict):
+        return ["Record must be a dictionary"]
 
-    for key, validator in field_validators:
-        val = record.get(key, "")
-        is_valid, reason = validator(val)
-        if not is_valid:
-            reasons.append(reason)
+    if "id" in record:
+        id_val = record["id"]
+    else:
+        id_val = ""
+    is_valid, reason = validate_id(id_val)
+    if is_valid == False:
+        reasons.append(reason)
+
+    if "title" in record:
+        title_val = record["title"]
+    else:
+        title_val = ""
+    is_valid, reason = validate_title(title_val)
+    if is_valid == False:
+        reasons.append(reason)
+
+    if "city" in record:
+        city_val = record["city"]
+    else:
+        city_val = ""
+    is_valid, reason = validate_city(city_val)
+    if is_valid == False:
+        reasons.append(reason)
+
+    if "year" in record:
+        year_val = record["year"]
+    else:
+        year_val = ""
+    is_valid, reason = validate_year(year_val)
+    if is_valid == False:
+        reasons.append(reason)
+
+    if "condition" in record:
+        condition_val = record["condition"]
+    else:
+        condition_val = ""
+    is_valid, reason = validate_condition(condition_val)
+    if is_valid == False:
+        reasons.append(reason)
 
     return reasons
-    raise NotImplementedError("validate_record")
