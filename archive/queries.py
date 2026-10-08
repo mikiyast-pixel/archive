@@ -5,9 +5,16 @@ def count_before(records, year):
     """How many manuscripts were written strictly BEFORE `year`?"""
     count = 0
     for item in records:
-        rec_year = int(item["year"])
-        if rec_year < year:
-            count = count + 1
+        if item == None or not isinstance(item, dict):
+            continue
+        if "year" in item:
+            year_val = item["year"]
+            try:
+                rec_year = int(year_val)
+                if rec_year < year:
+                    count = count + 1
+            except (ValueError, TypeError):
+                pass
     return count
 
 
@@ -16,9 +23,12 @@ def find_by_city(records, city):
     target = city.strip().lower()
     result = []
     for item in records:
-        item_city = item["city"].strip().lower()
-        if item_city == target:
-            result.append(item)
+        if item == None or not isinstance(item, dict):
+            continue
+        if "city" in item and item["city"] != None:
+            item_city = str(item["city"]).strip().lower()
+            if item_city == target:
+                result.append(item)
     return result
 
 
@@ -34,10 +44,17 @@ def oldest(records):
     smallest_year = None
 
     for item in records:
-        current_year = int(item["year"])
-        if smallest_year == None or current_year < smallest_year:
-            smallest_year = current_year
-            oldest_record = item
+        if item == None or not isinstance(item, dict):
+            continue
+        if "year" in item:
+            year_val = item["year"]
+            try:
+                current_year = int(year_val)
+                if smallest_year == None or current_year < smallest_year:
+                    smallest_year = current_year
+                    oldest_record = item
+            except (ValueError, TypeError):
+                pass
 
     return oldest_record
 
@@ -46,9 +63,12 @@ def cities_summary(records):
     """How many manuscripts come from each city?"""
     summary = {}
     for item in records:
-        city_name = item["city"]
-        if city_name in summary:
-            summary[city_name] = summary[city_name] + 1
-        else:
-            summary[city_name] = 1
+        if item == None or not isinstance(item, dict):
+            continue
+        if "city" in item and item["city"] != None:
+            city_name = item["city"]
+            if city_name in summary:
+                summary[city_name] = summary[city_name] + 1
+            else:
+                summary[city_name] = 1
     return summary
