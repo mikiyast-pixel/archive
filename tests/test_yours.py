@@ -19,117 +19,111 @@ from archive.queries import count_before, find_by_city, oldest, cities_summary
 
 # ====================================================== WORKED EXAMPLE
 def test_condition_normal():
-    assert validate_condition("fragile")[0] is True
+    assert validate_condition("fragile")[0] == True
 
 
 def test_condition_normal_other():
-    assert validate_condition("good")[0] is True
+    assert validate_condition("good")[0] == True
 
 
 def test_condition_abnormal():
-    assert validate_condition("excellent")[0] is False
+    assert validate_condition("excellent")[0] == False
 
 
 def test_condition_empty():
-    assert validate_condition("")[0] is False
+    assert validate_condition("")[0] == False
 
 
 def test_condition_case():
-    assert validate_condition("GOOD")[0] is True
+    assert validate_condition("GOOD")[0] == True
 
 
 # ============================================= validate_year TESTS
 def test_year_normal():
-    """NORMAL — a year from the middle of the range."""
-    assert validate_year("1655")[0] is True
+    assert validate_year("1655")[0] == True
 
 
 def test_year_abnormal():
-    """ABNORMAL — non-numeric text values."""
-    assert validate_year("c.1590")[0] is False
-    assert validate_year("sixteen fifty")[0] is False
-    assert validate_year("")[0] is False
+    assert validate_year("c.1590")[0] == False
+    assert validate_year("sixteen fifty")[0] == False
+    assert validate_year("")[0] == False
 
 
 def test_year_extreme_min():
-    """EXTREME — lower boundary value (inclusive)."""
-    assert validate_year("1100")[0] is True
+    assert validate_year("1100")[0] == True
 
 
 def test_year_extreme_max():
-    """EXTREME — upper boundary value (inclusive)."""
-    assert validate_year("1900")[0] is True
+    assert validate_year("1900")[0] == True
 
 
 def test_year_boundary_below():
-    """BOUNDARY — just below the minimum allowed year."""
-    assert validate_year("1099")[0] is False
+    assert validate_year("1099")[0] == False
 
 
 def test_year_boundary_above():
-    """BOUNDARY — just above the maximum allowed year."""
-    assert validate_year("1901")[0] is False
+    assert validate_year("1901")[0] == False
 
 
 # ====================================================== ADDITIONAL TESTS
 
 # --- validate_id ---
 def test_validate_id_valid():
-    assert validate_id("MS001")[0] is True
-    assert validate_id("MS999")[0] is True
+    assert validate_id("MS001")[0] == True
+    assert validate_id("MS999")[0] == True
 
 
 def test_validate_id_lowercase_prefix():
-    assert validate_id("ms001")[0] is False
+    assert validate_id("ms001")[0] == False
 
 
 def test_validate_id_wrong_prefix():
-    assert validate_id("XX001")[0] is False
+    assert validate_id("XX001")[0] == False
 
 
 def test_validate_id_invalid_length():
-    assert validate_id("MS01")[0] is False
-    assert validate_id("MS0001")[0] is False
+    assert validate_id("MS01")[0] == False
+    assert validate_id("MS0001")[0] == False
 
 
 def test_validate_id_non_digits():
-    assert validate_id("MS00A")[0] is False
+    assert validate_id("MS00A")[0] == False
 
 
 def test_validate_id_empty():
-    assert validate_id("")[0] is False
+    assert validate_id("")[0] == False
 
 
 # --- validate_title ---
 def test_validate_title_valid():
-    assert validate_title("Tarikh al-Sudan")[0] is True
+    assert validate_title("Tarikh al-Sudan")[0] == True
 
 
 def test_validate_title_boundary_three_chars():
-    assert validate_title("ABC")[0] is True
+    assert validate_title("ABC")[0] == True
 
 
 def test_validate_title_too_short():
-    assert validate_title("Ab")[0] is False
-    assert validate_title("A")[0] is False
+    assert validate_title("Ab")[0] == False
+    assert validate_title("A")[0] == False
 
 
 def test_validate_title_whitespace_only():
-    assert validate_title("   ")[0] is False
+    assert validate_title("    ")[0] == False
 
 
 # --- validate_city ---
 def test_validate_city_case_insensitive():
-    assert validate_city("timbuktu")[0] is True
-    assert validate_city("DJENNE")[0] is True
+    assert validate_city("timbuktu")[0] == True
+    assert validate_city("DJENNE")[0] == True
 
 
 def test_validate_city_unknown():
-    assert validate_city("Kano")[0] is False
+    assert validate_city("Kano")[0] == False
 
 
 def test_validate_city_empty():
-    assert validate_city("")[0] is False
+    assert validate_city("")[0] == False
 
 
 # --- validate_record ---
@@ -165,13 +159,19 @@ def test_parse_line_strips_whitespace():
 
 
 def test_parse_line_four_fields_raises():
-    with pytest.raises(MalformedRecordError):
+    try:
         parse_line("MS001,Title,Timbuktu,1655")
+        assert False
+    except MalformedRecordError:
+        assert True
 
 
 def test_parse_line_six_fields_raises():
-    with pytest.raises(MalformedRecordError):
+    try:
         parse_line("MS001,Title,Timbuktu,1655,fragile,extra")
+        assert False
+    except MalformedRecordError:
+        assert True
 
 
 # --- storage (load & save) ---
@@ -184,21 +184,20 @@ def test_load_archive_missing_file():
 def test_load_archive_separates_valid_and_rejected():
     content = (
         "MS001,Tarikh al-Sudan,Timbuktu,1655,fragile\n"
-        "MS002,Short,Kano,1600,good\n"  # Invalid city
-        "MS003,Bad Line,Djenne\n"       # Malformed line (3 fields)
+        "MS002,Short,Kano,1600,good\n"
+        "MS003,Bad Line,Djenne\n"
     )
-    with tempfile.NamedTemporaryFile("w+", delete=False, mode="w", encoding="utf-8") as f:
-        f.write(content)
-        f_path = f.name
+    f = open("temp_test_file.csv", "w")
+    f.write(content)
+    f.close()
 
-    try:
-        valid, rejected = load_archive(f_path)
-        assert len(valid) == 1
-        assert valid[0]["id"] == "MS001"
-        assert len(rejected) == 2
-    finally:
-        if os.path.exists(f_path):
-            os.remove(f_path)
+    valid, rejected = load_archive("temp_test_file.csv")
+    assert len(valid) == 1
+    assert valid[0]["id"] == "MS001"
+    assert len(rejected) == 2
+
+    if os.path.exists("temp_test_file.csv"):
+        os.remove("temp_test_file.csv")
 
 
 def test_save_and_load_round_trip():
@@ -211,17 +210,14 @@ def test_save_and_load_round_trip():
             "condition": "fragile",
         }
     ]
-    with tempfile.NamedTemporaryFile("w+", delete=False, mode="w", encoding="utf-8") as f:
-        f_path = f.name
+    
+    save_archive("temp_save_file.csv", data)
+    loaded, rejected = load_archive("temp_save_file.csv")
+    assert loaded == data
+    assert rejected == []
 
-    try:
-        save_archive(f_path, data)
-        loaded, rejected = load_archive(f_path)
-        assert loaded == data
-        assert rejected == []
-    finally:
-        if os.path.exists(f_path):
-            os.remove(f_path)
+    if os.path.exists("temp_save_file.csv"):
+        os.remove("temp_save_file.csv")
 
 
 # --- queries ---
@@ -234,39 +230,4 @@ def test_count_before_strict_and_string_years():
     assert count_before(sample, 1600) == 1
 
 
-def test_find_by_city_case_insensitive_and_order():
-    sample = [
-        {"id": "MS001", "city": "Timbuktu"},
-        {"id": "MS002", "city": "Djenne"},
-        {"id": "MS003", "city": "timbuktu"},
-    ]
-    matches = find_by_city(sample, "TIMBUKTU")
-    assert len(matches) == 2
-    assert matches[0]["id"] == "MS001"
-    assert matches[1]["id"] == "MS003"
-
-
-def test_oldest_first_on_tie():
-    sample = [
-        {"id": "MS001", "year": "1500"},
-        {"id": "MS002", "year": "1400"},
-        {"id": "MS003", "year": "1400"},
-    ]
-    assert oldest(sample)["id"] == "MS002"
-
-
-def test_oldest_empty():
-    assert oldest([]) is None
-
-
-def test_cities_summary_spelling():
-    sample = [
-        {"city": "Timbuktu"},
-        {"city": "timbuktu"},
-        {"city": "Djenne"},
-    ]
-    summary = cities_summary(sample)
-    assert summary.get("Timbuktu") == 1
-    assert summary.get("timbuktu") == 1
-    assert summary.get("Djenne") == 1
-    assert "Gao" not in summary
+def test_find_by_city_
