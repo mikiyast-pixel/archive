@@ -1,94 +1,88 @@
-"""Reading and writing the Archive file."""
-
 import os
 from archive.errors import MalformedRecordError
 from archive.validation import validate_record
 
-FIELD_NAMES = ["id", "title", "city", "year", "condition"]
-
+FIELD_NAMES = ['id', 'title', 'city', 'year', 'condition']
 
 def parse_line(line):
-    """Turn one CSV line into a dict with the five FIELD_NAMES as keys."""
-    clean_line = line.replace("\r", "").replace("\n", "").strip()
-    if clean_line == "":
-        raise MalformedRecordError("Empty line cannot be parsed as a record")
+    # clean up the line and make a dict
+    tmp = line.replace('\r', '').replace('\n', '').strip()
+    if tmp == '':
+        raise MalformedRecordError('empty line')
 
-    fields = clean_line.split(",")
-    if len(fields) != 5:
-        raise MalformedRecordError(
-            "Expected exactly 5 fields, got " + str(len(fields))
-        )
+    flds = tmp.split(',')
+    if len(flds) != 5:
+        raise MalformedRecordError('wrong number of fields: ' + str(len(flds)))
 
-    cleaned_fields = []
-    for f in fields:
-        field_val = f.strip().replace("\r", "").replace("\n", "")
-        cleaned_fields.append(field_val)
+    cln = []
+    for f in flds:
+        cln.append(f.strip().replace('\r', '').replace('\n', ''))
 
-    record = {}
-    record["id"] = cleaned_fields[0]
-    record["title"] = cleaned_fields[1]
-    record["city"] = cleaned_fields[2]
-    record["year"] = cleaned_fields[3]
-    record["condition"] = cleaned_fields[4]
-
-    return record
+    rec = {}
+    rec['id'] = cln[0]
+    rec['title'] = cln[1]
+    rec['city'] = cln[2]
+    rec['year'] = cln[3]
+    rec['condition'] = cln[4]
+    
+    return rec
 
 
 def load_archive(path):
-    """Read the file at path and return (valid_records, rejected_lines)."""
+    # open file and sort valid vs rejected
     if os.path.exists(path) == False:
         return ([], [])
 
-    valid_records = []
-    rejected_lines = []
+    good_recs = []
+    bad_lines = []
 
-    with open(path, "r", encoding="utf-8") as f:
-        for line in f:
-            raw_line = line.replace("\r", "").replace("\n", "")
-            if raw_line.strip() == "":
+    with open(path, 'r', encoding='utf-8') as f:
+        for ln in f:
+            raw = ln.replace('\r', '').replace('\n', '')
+            if raw.strip() == '':
                 continue
-
+            
             try:
-                record = parse_line(raw_line)
-                reasons = validate_record(record)
-                if len(reasons) == 0:
-                    valid_records.append(record)
+                rec = parse_line(raw)
+                errs = validate_record(rec)
+                if len(errs) == 0:
+                    good_recs.append(rec)
                 else:
-                    rejected_lines.append(raw_line)
+                    bad_lines.append(raw)
             except MalformedRecordError:
-                rejected_lines.append(raw_line)
+                bad_lines.append(raw)
 
-    return (valid_records, rejected_lines)
+    return (good_recs, bad_lines)
 
 
 def save_archive(path, records):
-    """Write every record to path as CSV, one per line, no header."""
-    with open(path, "w", encoding="utf-8") as f:
-        for record in records:
-            if "id" in record:
-                id_str = str(record["id"]).replace("\r", "").replace("\n", "")
+    # write records back to csv
+    with open(path, 'w', encoding='utf-8') as f:
+        for r in records:
+            if 'id' in r:
+                i_str = str(r['id']).replace('\r', '').replace('\n', '')
             else:
-                id_str = ""
+                i_str = ''
 
-            if "title" in record:
-                title_str = str(record["title"]).replace("\r", "").replace("\n", "")
+            if 'title' in r:
+                t_str = str(r['title']).replace('\r', '').replace('\n', '')
             else:
-                title_str = ""
+                t_str = ''
 
-            if "city" in record:
-                city_str = str(record["city"]).replace("\r", "").replace("\n", "")
+            if 'city' in r:
+                c_str = str(r['city']).replace('\r', '').replace('\n', '')
             else:
-                city_str = ""
+                c_str = ''
 
-            if "year" in record:
-                year_str = str(record["year"]).replace("\r", "").replace("\n", "")
+            if 'year' in r:
+                y_str = str(r['year']).replace('\r', '').replace('\n', '')
             else:
-                year_str = ""
+                y_str = ''
 
-            if "condition" in record:
-                cond_str = str(record["condition"]).replace("\r", "").replace("\n", "")
+            if 'condition' in r:
+                cond_str = str(r['condition']).replace('\r', '').replace('\n', '')
             else:
-                cond_str = ""
+                cond_str = ''
 
-            row = id_str + "," + title_str + "," + city_str + "," + year_str + "," + cond_str
-            f.write(row + "\n")
+            row = i_str + ',' + t_str + ',' + c_str + ',' + y_str + ',' + cond_str
+            f.write(row + '\n')
