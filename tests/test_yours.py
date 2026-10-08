@@ -1,7 +1,6 @@
 """YOUR test suite — Part B."""
 
 import os
-import tempfile
 import pytest
 
 from archive.errors import MalformedRecordError
@@ -40,28 +39,34 @@ def test_condition_case():
 
 # ============================================= validate_year TESTS
 def test_year_normal():
+    """NORMAL — a year from the middle of the range."""
     assert validate_year("1655")[0] == True
 
 
 def test_year_abnormal():
+    """ABNORMAL — non-numeric text values."""
     assert validate_year("c.1590")[0] == False
     assert validate_year("sixteen fifty")[0] == False
     assert validate_year("")[0] == False
 
 
 def test_year_extreme_min():
+    """EXTREME — lower boundary value (inclusive)."""
     assert validate_year("1100")[0] == True
 
 
 def test_year_extreme_max():
+    """EXTREME — upper boundary value (inclusive)."""
     assert validate_year("1900")[0] == True
 
 
 def test_year_boundary_below():
+    """BOUNDARY — just below the minimum allowed year."""
     assert validate_year("1099")[0] == False
 
 
 def test_year_boundary_above():
+    """BOUNDARY — just above the maximum allowed year."""
     assert validate_year("1901")[0] == False
 
 
@@ -210,7 +215,7 @@ def test_save_and_load_round_trip():
             "condition": "fragile",
         }
     ]
-    
+
     save_archive("temp_save_file.csv", data)
     loaded, rejected = load_archive("temp_save_file.csv")
     assert loaded == data
