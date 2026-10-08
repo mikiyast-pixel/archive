@@ -1,209 +1,128 @@
-"""Validation rules for manuscript records.
+from archive.errors import MalformedRecordError
 
-YOU IMPLEMENT THIS FILE.
-
-Every validate_* function takes a raw string (exactly as it came out of the
-CSV file) and returns a tuple:
-
-    (True, "")              the value is trustworthy
-    (False, "reason here")  the value is not, and here is why
-
-The reason is a short human-readable string. The autograder checks the
-boolean, not your exact wording — but a teammate reading your rejection log
-should understand it, so write it for them.
-
-READ THIS BEFORE YOU START
---------------------------
-The year range is INCLUSIVE at both ends: 1100 and 1900 are VALID.
-1099 and 1901 are not. Most marks lost in Part A are lost on that line.
-"""
-
-from archive.errors import MalformedRecordError  # noqa: F401  (you may not need it here)
-
-KNOWN_CITIES = ["Timbuktu", "Djenne", "Gao", "Walata", "Chinguetti"]
-VALID_CONDITIONS = ["fragile", "fair", "good"]
+KNOWN_CITIES = ['Timbuktu', 'Djenne', 'Gao', 'Walata', 'Chinguetti']
+VALID_CONDITIONS = ['fragile', 'fair', 'good']
 
 MIN_YEAR = 1100
 MAX_YEAR = 1900
 
-
-def is_null(val):
-    if val is None:
+def check_empty(v):
+    if v == None:
         return True
-    if isinstance(val, str) and len(val.strip()) == 0:
+    if type(v) == str and len(v.strip()) == 0:
         return True
     return False
 
+def validate_id(val):
+    # ms prefix and 3 numbers
+    if check_empty(val):
+        return (False, 'missing id')
+    if len(val) != 5:
+        return (False, 'bad length')
+    if val[0:2] != 'MS':
+        return (False, 'needs MS')
+    if val[2:].isdigit() == False:
+        return (False, 'needs 3 digits')
+    return (True, 'ok')
 
-def is_int(val):
-    try:
-        int(val)
-        return True
-    except (ValueError, TypeError):
-        return False
+def validate_title(val):
+    # needs to be 3 chars min
+    if check_empty(val):
+        return (False, 'missing title')
+    
+    cln = val.strip()
+    if len(cln) < 3:
+        return (False, 'too short')
+        
+    return (True, 'ok')
 
+def validate_city(val):
+    # check if city is in our list
+    if check_empty(val):
+        return (False, 'missing city')
 
-def validate_id(value):
-    """An ID is the letters 'MS' followed by exactly three digits.
-
-    Valid:   "MS001", "MS742"
-    Invalid: "MS1", "MS0012", "ms001", "XX001", "", "MS00A"
-
-    Returns (bool, str).
-    """
-    if is_null(value) == True:
-        return (False, "ID is missing")
-    if len(value) != 5:
-        return (False, "ID must be exactly 5 characters long")
-    if value[0:2] != "MS":
-        return (False, "ID must start with uppercase 'MS'")
-    if value[2:].isdigit() == False:
-        return (False, "ID must end with exactly three digits")
-
-    return (True, "Valid ID")
-
-
-def validate_title(value):
-    """A title must be present and at least 3 characters once stripped.
-
-    Valid:   "Tarikh al-Sudan"
-    Invalid: "", "   ", "Ab"
-
-    Returns (bool, str).
-    """
-    if is_null(value) == True:
-        return (False, "Title is missing")
-
-    cleaned_title = value.strip()
-    if len(cleaned_title) < 3:
-        return (False, "Title must be at least 3 characters once stripped")
-
-    return (True, "Valid Title")
-
-
-def validate_city(value):
-    """A city must be present and appear in KNOWN_CITIES.
-
-    Comparison is case-insensitive: "timbuktu" is acceptable.
-    "Kano" is not in our list, so it is rejected — and that is a real
-    decision with a cost. Write about it in your README.
-
-    Returns (bool, str).
-    """
-    if is_null(value) == True:
-        return (False, "City is missing")
-
-    known_cities_lower = []
+    lower_cities = []
     for c in KNOWN_CITIES:
-        known_cities_lower.append(c.lower())
+        lower_cities.append(c.lower())
 
-    if value.strip().lower() not in known_cities_lower:
-        return (False, "City is not in known cities list")
+    if val.strip().lower() not in lower_cities:
+        return (False, 'unknown city')
 
-    return (True, "Valid City")
+    return (True, 'ok')
 
+def validate_year(val):
+    # number between limits
+    if check_empty(val):
+        return (False, 'missing year')
 
-def validate_year(value):
-    """A year must be present, numeric, and between MIN_YEAR and MAX_YEAR
-    INCLUSIVE.
+    cln = val.strip()
+    try:
+        y = int(cln)
+        if y < MIN_YEAR or y > MAX_YEAR:
+            return (False, 'out of range')
+        return (True, 'ok')
+    except:
+        return (False, 'not a number')
 
-    Valid:   "1655", "1100", "1900"
-    Invalid: "", "   ", "c.1590", "sixteen fifty", "1099", "1901", "2087"
+def validate_condition(val):
+    # must be fragile fair or good
+    if check_empty(val):
+        return (False, 'missing cond')
 
-    Note that "2087" parses perfectly well as a number. It is still wrong.
-    That is the whole point of a range check.
-
-    Returns (bool, str)
-    """
-    if is_null(value) == True:
-        return (False, "Year is missing")
-
-    stripped = value.strip()
-    if is_int(stripped) == False:
-        return (False, "Year must be an integer")
-
-    year_int = int(stripped)
-    if year_int < MIN_YEAR or year_int > MAX_YEAR:
-        return (False, "Year must be between 1100 and 1900 inclusive")
-
-    return (True, "Valid Year")
-
-
-def validate_condition(value):
-    """A condition must be one of VALID_CONDITIONS, case-insensitively.
-
-    Valid:   "fragile", "GOOD", "Fair"
-    Invalid: "excellent", "", "ok"
-
-    Returns (bool, str).
-    """
-    if is_null(value) == True:
-        return (False, "Condition is missing")
-
-    valid_conditions_lower = []
+    lower_conds = []
     for c in VALID_CONDITIONS:
-        valid_conditions_lower.append(c.lower())
+        lower_conds.append(c.lower())
 
-    if value.strip().lower() not in valid_conditions_lower:
-        return (False, "Condition must be one of valid conditions")
+    if val.strip().lower() not in lower_conds:
+        return (False, 'bad cond')
 
-    return (True, "Valid Condition")
+    return (True, 'ok')
 
+def validate_record(rec):
+    # run all checks and return errors
+    errs = []
 
-def validate_record(record):
-    """Validate a whole record dictionary.
+    if rec == None or type(rec) != dict:
+        return ['needs to be a dict']
 
-    record is a dict with the keys: id, title, city, year, condition.
-
-    Returns a LIST of reasons the record is invalid — one string per broken
-    rule, in this field order: id, title, city, year, condition.
-    An empty list means the record is valid.
-
-    Do not re-write the rules here. Call the five functions above.
-    """
-    reasons = []
-
-    if record == None or not isinstance(record, dict):
-        return ["Record must be a dictionary"]
-
-    if "id" in record:
-        id_val = record["id"]
+    if 'id' in rec:
+        v_id = rec['id']
     else:
-        id_val = ""
-    is_valid, reason = validate_id(id_val)
-    if is_valid == False:
-        reasons.append(reason)
+        v_id = ''
+    valid, msg = validate_id(v_id)
+    if valid == False:
+        errs.append(msg)
 
-    if "title" in record:
-        title_val = record["title"]
+    if 'title' in rec:
+        v_title = rec['title']
     else:
-        title_val = ""
-    is_valid, reason = validate_title(title_val)
-    if is_valid == False:
-        reasons.append(reason)
+        v_title = ''
+    valid, msg = validate_title(v_title)
+    if valid == False:
+        errs.append(msg)
 
-    if "city" in record:
-        city_val = record["city"]
+    if 'city' in rec:
+        v_city = rec['city']
     else:
-        city_val = ""
-    is_valid, reason = validate_city(city_val)
-    if is_valid == False:
-        reasons.append(reason)
+        v_city = ''
+    valid, msg = validate_city(v_city)
+    if valid == False:
+        errs.append(msg)
 
-    if "year" in record:
-        year_val = record["year"]
+    if 'year' in rec:
+        v_yr = rec['year']
     else:
-        year_val = ""
-    is_valid, reason = validate_year(year_val)
-    if is_valid == False:
-        reasons.append(reason)
+        v_yr = ''
+    valid, msg = validate_year(v_yr)
+    if valid == False:
+        errs.append(msg)
 
-    if "condition" in record:
-        condition_val = record["condition"]
+    if 'condition' in rec:
+        v_cond = rec['condition']
     else:
-        condition_val = ""
-    is_valid, reason = validate_condition(condition_val)
-    if is_valid == False:
-        reasons.append(reason)
+        v_cond = ''
+    valid, msg = validate_condition(v_cond)
+    if valid == False:
+        errs.append(msg)
 
-    return reasons
+    return errs
