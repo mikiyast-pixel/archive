@@ -1,78 +1,68 @@
-"""Questions we ask the Archive."""
-
-
 def count_before(records, year):
-    """How many manuscripts were written strictly BEFORE `year`?"""
-    count = 0
-    for rec in records:
-        if int(rec["year"]) < year:
-            count += 1
-    return count
+    # find how many are before the given year
+    cnt = 0
+    for r in records:
+        if r == None or type(r) != dict:
+            continue
+        if 'year' in r:
+            y_val = r['year']
+            try:
+                y_int = int(y_val)
+                if y_int < year:
+                    cnt = cnt + 1
+            except:
+                pass
+    return cnt
 
 
 def find_by_city(records, city):
-    """Every record whose city matches `city`, case-insensitively. Order is preserved."""
-    target = city.strip().lower()
-    return [rec for rec in records if rec["city"].strip().lower() == target]
+    # match city case insensitive
+    tgt = city.strip().lower()
+    res = []
+    for r in records:
+        if r == None or type(r) != dict:
+            continue
+        if 'city' in r and r['city'] != None:
+            c = str(r['city']).strip().lower()
+            if c == tgt:
+                res.append(r)
+    return res
 
 
 def oldest(records):
-    """The record with the smallest year. Return None if empty.
-
-    If two records tie on year, return the one that appears FIRST.
-    """
-    if not records:
+    # get the oldest record
+    if len(records) == 0:
         return None
-    return min(records, key=lambda rec: int(rec["year"]))
+
+    old_rec = None
+    min_yr = None
+
+    for r in records:
+        if r == None or type(r) != dict:
+            continue
+        if 'year' in r:
+            y_val = r['year']
+            try:
+                curr = int(y_val)
+                if min_yr == None or curr < min_yr:
+                    min_yr = curr
+                    old_rec = r
+            except:
+                pass
+
+    return old_rec
 
 
 def cities_summary(records):
-    """How many manuscripts come from each city?"""
-    summary = {}
-    for rec in records:
-        city_name = rec["city"]
-        summary[city_name] = summary.get(city_name, 0) + 1
-    return summary
-    for rec in records:
-        if int(rec["year"]) < year:
-            count += 1
-    return count
-
-
-def find_by_city(records, city):
-    """Every record whose city matches `city`, case-insensitively. Order is preserved."""
-    target = city.strip().lower()
-    return [rec for rec in records if rec["city"].strip().lower() == target]
-
-
-def oldest(records):
-    """The record with the smallest year. Return None if empty.
-
-    If two records tie on year, return the one that appears FIRST.
-    """
-    if not records:
-        return None
-    return min(records, key=lambda rec: int(rec["year"]))
-
-
-def cities_summary(records):
-    """How many manuscripts come from each city?"""
-    summary = {}
-    for rec in records:
-        city_name = rec["city"]
-        summary[city_name] = summary.get(city_name, 0) + 1
-    return summary
-    """If two records tie on year, return the one that appears FIRST.
-    """
-    if not records:
-        return None
-    return min(records, key=lambda rec: int(rec["year"]))
-
-
-def cities_summary(records):
-    """How many manuscripts come from each city?"""
-    summary = {}
-    for rec in records:
-        city_name = rec["city"]
-        summary[city_name] = summary.get(city_name, 0) + 1
-    return summary
+    # count per city
+    sum_dict = {}
+    for r in records:
+        if r == None or type(r) != dict:
+            continue
+        if 'city' in r and r['city'] != None:
+            c_name = r['city']
+            if c_name in sum_dict:
+                sum_dict[c_name] = sum_dict[c_name] + 1
+            else:
+                sum_dict[c_name] = 1
+    return sum_dict
