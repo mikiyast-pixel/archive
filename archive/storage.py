@@ -9,11 +9,11 @@ FIELD_NAMES = ["id", "title", "city", "year", "condition"]
 
 def parse_line(line):
     """Turn one CSV line into a dict with the five FIELD_NAMES as keys."""
-    stripped_line = line.strip()
-    if stripped_line == "":
+    clean_line = line.replace("\r", "").replace("\n", "").strip()
+    if clean_line == "":
         raise MalformedRecordError("Empty line cannot be parsed as a record")
 
-    fields = stripped_line.split(",")
+    fields = clean_line.split(",")
     if len(fields) != 5:
         raise MalformedRecordError(
             "Expected exactly 5 fields, got " + str(len(fields))
@@ -21,7 +21,8 @@ def parse_line(line):
 
     cleaned_fields = []
     for f in fields:
-        cleaned_fields.append(f.strip())
+        field_val = f.strip().replace("\r", "").replace("\n", "")
+        cleaned_fields.append(field_val)
 
     record = {}
     record["id"] = cleaned_fields[0]
@@ -41,42 +42,53 @@ def load_archive(path):
     valid_records = []
     rejected_lines = []
 
-    f = open(path, "r", encoding="utf-8")
-    for line in f:
-        if line.endswith("\n"):
-            raw_line = line[:-1]
-        else:
-            raw_line = line
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            raw_line = line.replace("\r", "").replace("\n", "")
+            if raw_line.strip() == "":
+                continue
 
-        if raw_line.endswith("\r"):
-            raw_line = raw_line[:-1]
-
-        if raw_line.strip() == "":
-            continue
-
-        try:
-            record = parse_line(raw_line)
-            reasons = validate_record(record)
-            if len(reasons) == 0:
-                valid_records.append(record)
-            else:
+            try:
+                record = parse_line(raw_line)
+                reasons = validate_record(record)
+                if len(reasons) == 0:
+                    valid_records.append(record)
+                else:
+                    rejected_lines.append(raw_line)
+            except MalformedRecordError:
                 rejected_lines.append(raw_line)
-        except MalformedRecordError:
-            rejected_lines.append(raw_line)
 
-    f.close()
     return (valid_records, rejected_lines)
 
 
 def save_archive(path, records):
     """Write every record to path as CSV, one per line, no header."""
-    f = open(path, "w", encoding="utf-8")
-    for record in records:
-        row = ""
-        row = row + str(record["id"]) + ","
-        row = row + str(record["title"]) + ","
-        row = row + str(record["city"]) + ","
-        row = row + str(record["year"]) + ","
-        row = row + str(record["condition"])
-        f.write(row + "\n")
-    f.close()
+    with open(path, "w", encoding="utf-8") as f:
+        for record in records:
+            if "id" in record:
+                id_str = str(record["id"]).replace("\r", "").replace("\n", "")
+            else:
+                id_str = ""
+
+            if "title" in record:
+                title_str = str(record["title"]).replace("\r", "").replace("\n", "")
+            else:
+                title_str = ""
+
+            if "city" in record:
+                city_str = str(record["city"]).replace("\r", "").replace("\n", "")
+            else:
+                city_str = ""
+
+            if "year" in record:
+                year_str = str(record["year"]).replace("\r", "").replace("\n", "")
+            else:
+                year_str = ""
+
+            if "condition" in record:
+                cond_str = str(record["condition"]).replace("\r", "").replace("\n", "")
+            else:
+                cond_str = ""
+
+            row = id_str + "," + title_str + "," + city_str + "," + year_str + "," + cond_str
+            f.write(row + "\n")
